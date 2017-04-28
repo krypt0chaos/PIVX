@@ -49,6 +49,8 @@ src/qt/forms/ui_*.h
 
 src/qt/test/moc*.cpp
 
+contrib/devtools/split-debug.sh
+
 .deps
 .dirstamp
 .libs
