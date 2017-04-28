@@ -1,6 +1,7 @@
 PIVX Core
 =====================
 
+Foobar
 Setup
 ---------------------
 [PIVX Core](http://pivx.org/wallet) is the original PIVX client and it builds the backbone of the network. 
