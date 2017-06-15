@@ -346,6 +346,33 @@ void CMasternodeMan::Clear()
     nDsqCount = 0;
 }
 
+int CMasternodeMan::stable_size ()
+{
+    int nStable_size = 0;
+    int nMinProtocol = ActiveProtocol();
+    int64_t nMasternode_Min_Age = GetSporkValue(SPORK_15_MN_WINNER_MINIMUM_AGE);
+    int64_t nMasternode_Age = 0;
+
+    BOOST_FOREACH (CMasternode& mn, vMasternodes) {
+        if (mn.protocolVersion < nMinProtocol) {
+            continue; // Skip obsolete versions
+        }
+        if (IsSporkActive (SPORK_8_MASTERNODE_PAYMENT_ENFORCEMENT)) {
+            nMasternode_Age = mn.lastPing.sigTime - mn.sigTime;
+            if ((nMasternode_Age) < nMasternode_Min_Age) {
+                continue; // Skip masternodes younger than (default) 1 hour
+            }
+        }
+        mn.Check ();
+        if (!mn.IsEnabled ())
+            continue; // Skip not-enabled masternodes
+
+        nStable_size++;
+    }
+
+    return nStable_size;
+}
+    
 int CMasternodeMan::CountEnabled(int protocolVersion)
 {
     int i = 0;

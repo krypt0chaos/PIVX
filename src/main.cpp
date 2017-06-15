@@ -1673,6 +1673,9 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCou
         if(nMasternodeCount)
             mNodeCoins = nMasternodeCount * 10000 * COIN;
 
+        // Use this log to compare the masternode count for different clients
+        LogPrintf("Adjusting seesaw at height %d with %d masternodes at %ld\n", nHeight, nMasternodeCount, GetTime());
+        
         if (fDebug)
             LogPrintf("GetMasternodePayment(): moneysupply=%s, nodecoins=%s \n", FormatMoney(nMoneySupply).c_str(),
                 FormatMoney(mNodeCoins).c_str());
