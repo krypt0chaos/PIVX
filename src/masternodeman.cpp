@@ -540,6 +540,8 @@ CMasternode* CMasternodeMan::GetCurrentMasterNode(int mod, int64_t nBlockHeight,
 int CMasternodeMan::GetMasternodeRank(const CTxIn& vin, int64_t nBlockHeight, int minProtocol, bool fOnlyActive)
 {
     std::vector<pair<int64_t, CTxIn> > vecMasternodeScores;
+    int64_t nMasternode_Min_Age = GetSporkValue(SPORK_15_MN_WINNER_MINIMUM_AGE);
+    int64_t nMasternode_Age = 0;
 
     //make sure we know about this block
     uint256 hash = 0;
@@ -547,7 +549,18 @@ int CMasternodeMan::GetMasternodeRank(const CTxIn& vin, int64_t nBlockHeight, in
 
     // scan for winner
     BOOST_FOREACH (CMasternode& mn, vMasternodes) {
-        if (mn.protocolVersion < minProtocol) continue;
+        if (mn.protocolVersion < minProtocol) {
+            LogPrintf("Skipping Masternode with obsolete version %d\n", mn.protocolVersion);
+            continue;                                                       // Skip obsolete versions
+        }
+        
+        if (IsSporkActive(SPORK_8_MASTERNODE_PAYMENT_ENFORCEMENT)) {
+            nMasternode_Age = mn.lastPing.sigTime - mn.sigTime;
+            if ((nMasternode_Age) < nMasternode_Min_Age) {
+                LogPrintf("Skipping just activated Masternode. Age: %ld\n", nMasternode_Age);
+                continue;                                                   // Skip masternodes younger than (default) 1 hour
+            }
+        }
         if (fOnlyActive) {
             mn.Check();
             if (!mn.IsEnabled()) continue;
