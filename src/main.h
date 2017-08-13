@@ -31,6 +31,8 @@
 
 #include <algorithm>
 #include <exception>
+#include <execinfo.h>
+#include <signal.h>
 #include <map>
 #include <set>
 #include <stdint.h>

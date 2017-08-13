@@ -36,6 +36,50 @@
 
 static bool fDaemon;
 
+// Handle (potentially) uncaught exceptions for ease of debugging via stacktrace
+// Methods used for this are printStacktrace(), signalHandler() and terminateHandler() below
+
+void printStacktrace()
+{
+    void *array[20];
+    size_t size = backtrace(array, sizeof(array) / sizeof(array[0]));
+    backtrace_symbols_fd(array, size, STDERR_FILENO);
+}
+
+void signalHandler(int sig)
+{
+    fprintf(stderr, "Error: signal %d\n", sig);
+    printStacktrace();
+    abort();
+}
+
+void terminateHandler()
+{
+    exception_ptr exptr = current_exception();
+    if (exptr != 0)
+    {
+        // Rethrow exception to catch it with more information
+        try
+        {
+            rethrow_exception(exptr);
+        }
+        catch (exception &ex)
+        {
+            fprintf(stderr, "pivxd terminated with exception: %s\n", ex.what());
+        }
+        catch (...)
+        {
+            fprintf(stderr, "pivxd terminated with unknown exception\n");
+        }
+    }
+    else
+    {
+        fprintf(stderr, "pivxd terminated with unknown reason\n");
+    }
+    printStacktrace();
+    abort();
+}
+
 void DetectShutdownThread(boost::thread_group* threadGroup)
 {
     bool fShutdown = ShutdownRequested();
@@ -172,6 +216,10 @@ bool AppInit(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
+    // Global exception handler to catch any uncaught exception with a backtrace
+    signal(SIGSEGV, signalHandler);
+    std::set_terminate(terminateHandler);
+
     SetupEnvironment();
 
     // Connect pivxd signal handlers
