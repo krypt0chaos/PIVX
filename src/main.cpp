@@ -1650,12 +1650,17 @@ int64_t GetBlockValue(int nHeight)
     } else {
         nSubsidy = 0 * COIN;
     }
+
+    // XX42 log
+    GetMasternodePayment(nHeight, nSubsidy);
+    
     return nSubsidy;
 }
 
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCount)
 {
     int64_t ret = 0;
+    int64_t nMoneySupply = 0; // XX42
 
     if (Params().NetworkID() == CBaseChainParams::TESTNET) {
         if (nHeight < 200)
@@ -1671,7 +1676,7 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCou
     } else if (nHeight <= Params().LAST_POW_BLOCK() && nHeight >= 151200) {
         ret = blockValue / 2;
     } else if (nHeight > Params().LAST_POW_BLOCK()) {
-        int64_t nMoneySupply = chainActive.Tip()->nMoneySupply;
+        nMoneySupply = chainActive.Tip()->nMoneySupply; // XX42
         int64_t mNodeCoins = mnodeman.size() * 10000 * COIN;
 
         //if a mn count is inserted into the function we are looking for a specific result for a masternode count
@@ -1898,6 +1903,15 @@ int64_t GetMasternodePayment(int nHeight, int64_t blockValue, int nMasternodeCou
         }
     }
 
+    // XX42 log
+    if (blockValue < (50 * COIN)){
+        float fret = (float)ret / (float)100000000;
+        float fblockValue = (float)blockValue / (float)100000000;
+        stringstream stream;
+        stream << "XX42_MN_PAYMENT " << nHeight << " " << fblockValue << " " << fret << " " << nMoneySupply/COIN;
+        LogPrintf("%s\n", stream.str());
+    }
+        
     return ret;
 }
 
