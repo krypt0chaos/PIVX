@@ -48,6 +48,7 @@
 #include <QMimeData>
 #include <QProgressBar>
 #include <QProgressDialog>
+#include <QPropertyAnimation>
 #include <QSettings>
 #include <QStackedWidget>
 #include <QStatusBar>
@@ -252,6 +253,8 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     connect(quitAction, SIGNAL(triggered()), explorerWindow, SLOT(hide()));
 
     // Install event filter to be able to catch status tip events (QEvent::StatusTip)
+
+    // this->setMouseTracking(true);
     this->installEventFilter(this);
 
     // Initially wallet actions should be disabled
@@ -355,6 +358,18 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
         tabGroup->addAction(masternodeAction);
         connect(masternodeAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
         connect(masternodeAction, SIGNAL(triggered()), this, SLOT(gotoMasternodePage()));
+    }
+
+    this->tabWidget = new QTabWidget(this);
+    tabWidget->setTabPosition(QTabWidget::West);
+    tabWidget->addAction(overviewAction);
+    tabWidget->addAction(sendCoinsAction);
+    tabWidget->addAction(receiveCoinsAction);
+    tabWidget->addAction(historyAction);
+    tabWidget->addAction(privacyAction);
+            
+    if (settings.value("fShowMasternodesTab").toBool()) {
+        tabWidget->addAction(masternodeAction);
     }
 
     // These showNormalIfMinimized are needed because Send Coins and Receive Coins
@@ -527,7 +542,15 @@ void BitcoinGUI::createToolBars()
 {
     if (walletFrame) {
         QToolBar* toolbar = new QToolBar(tr("Tabs toolbar"));
+        toolbar->setObjectName("Main-Toolbar");
         toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+
+        // Add some empty space at the top of the toolbars
+        //QWidget* spacer = new QWidget();
+        QAction* spacer = new QAction(this);
+        toolbar->addAction(spacer);
+        toolbar->widgetForAction(spacer)->setObjectName("ToolbarSpacer");
+
         toolbar->addAction(overviewAction);
         toolbar->addAction(sendCoinsAction);
         toolbar->addAction(receiveCoinsAction);
@@ -538,7 +561,11 @@ void BitcoinGUI::createToolBars()
         if (settings.value("fShowMasternodesTab").toBool()) {
             toolbar->addAction(masternodeAction);
         }
+
+        // toolbar->addWidget(this->tabWidget); // This works like a spacer, whatever else follows will be moved down.
+
         toolbar->setMovable(false); // remove unused icon in upper left corner
+        toolbar->setOrientation(Qt::Vertical);
         overviewAction->setChecked(true);
 
         /** Create additional container for toolbar and walletFrame and make it the central widget.
@@ -549,9 +576,13 @@ void BitcoinGUI::createToolBars()
         layout->addWidget(walletFrame);
         layout->setSpacing(0);
         layout->setContentsMargins(QMargins());
+        layout->setDirection(QBoxLayout::LeftToRight);
+
         QWidget* containerWidget = new QWidget();
         containerWidget->setLayout(layout);
         setCentralWidget(containerWidget);
+        
+
     }
 }
 
