@@ -124,7 +124,6 @@ private:
     QAction* openBlockExplorerAction;
     QAction* showHelpMessageAction;
     QAction* multiSendAction;
-    QTabWidget* tabWidget;
 
     QSystemTrayIcon* trayIcon;
     QMenu* trayIconMenu;
