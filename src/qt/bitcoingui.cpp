@@ -530,10 +530,10 @@ void BitcoinGUI::createToolBars()
         toolbar->setObjectName("Main-Toolbar");
         toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 
-        // Add some empty space at the top of the toolbars
-        QAction* spacer = new QAction(this);
-        toolbar->addAction(spacer);
-        toolbar->widgetForAction(spacer)->setObjectName("ToolbarSpacer");
+//        // Add some empty space at the top of the toolbars
+//        QAction* spacer = new QAction(this);
+//        toolbar->addAction(spacer);
+//        toolbar->widgetForAction(spacer)->setObjectName("ToolbarSpacer");
 
         toolbar->addAction(overviewAction);
         toolbar->addAction(sendCoinsAction);
