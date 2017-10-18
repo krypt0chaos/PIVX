@@ -103,11 +103,11 @@ void PrivacyDialog::setModel(WalletModel* walletModel)
     if (walletModel && walletModel->getOptionsModel()) {
         // Keep up to date with wallet
         setBalance(walletModel->getBalance(),         walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
-                   walletModel->getZerocoinBalance(), walletModel->getWatchBalance(),       walletModel->getWatchUnconfirmedBalance(), 
-                   walletModel->getWatchImmatureBalance());
+                   walletModel->getZerocoinBalance(), walletModel->getUnconfirmedZerocoinBalance(),  walletModel->getWatchBalance(),
+                   walletModel->getWatchUnconfirmedBalance(), walletModel->getWatchImmatureBalance());
         
-        connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, 
-                               SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
+        connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, 
+                               SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
         ui->securityLevel->setValue(nSecurityLevel);
     }
 }
@@ -199,9 +199,9 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
     }
 
     // Available balance isn't always updated, so force it.
-    setBalance(walletModel->getBalance(),         walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
-               walletModel->getZerocoinBalance(), walletModel->getWatchBalance(),       walletModel->getWatchUnconfirmedBalance(), 
-               walletModel->getWatchImmatureBalance());
+    setBalance(walletModel->getBalance(),                 walletModel->getUnconfirmedBalance(),         walletModel->getImmatureBalance(), 
+               walletModel->getZerocoinBalance(),         walletModel->getUnconfirmedZerocoinBalance(), walletModel->getWatchBalance(),
+               walletModel->getWatchUnconfirmedBalance(), walletModel->getWatchImmatureBalance());
     coinControlUpdateLabels();
 
     return;
@@ -501,14 +501,17 @@ bool PrivacyDialog::updateLabel(const QString& address)
     return false;
 }
 
-void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& unconfirmedBalance, const CAmount& immatureBalance, 
-                               const CAmount& zerocoinBalance, const CAmount& watchOnlyBalance,   const CAmount& watchUnconfBalance, 
-                               const CAmount& watchImmatureBalance)
+void PrivacyDialog::setBalance(const CAmount& balance,            const CAmount& unconfirmedBalance,         const CAmount& immatureBalance, 
+                               const CAmount& zerocoinBalance,    const CAmount& unconfirmedZerocoinBalance, const CAmount& watchOnlyBalance,
+                               const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance)
 {
+    CAmount nMintedTotals = 0;
+
     currentBalance = balance;
     currentUnconfirmedBalance = unconfirmedBalance;
     currentImmatureBalance = immatureBalance;
     currentZerocoinBalance = zerocoinBalance;
+    currentUnconfirmedZerocoinBalance = unconfirmedZerocoinBalance;
     currentWatchOnlyBalance = watchOnlyBalance;
     currentWatchUnconfBalance = watchUnconfBalance;
     currentWatchImmatureBalance = watchImmatureBalance;
@@ -533,18 +536,23 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
     int64_t nCoins = 0;
     int64_t nSumPerCoin = 0;
     int64_t nUnconfirmed = 0;
+    int64_t nConfirmed = 0;
     QString strDenomStats, strUnconfirmed = "";
     
     for (const auto& denom : libzerocoin::zerocoinDenomList) {
         nCoins = libzerocoin::ZerocoinDenominationToInt(denom);
-        nSumPerCoin = nCoins * mapDenomBalances.at(denom);
         nUnconfirmed = mapUnconfirmed.at(denom);
+        nConfirmed = mapDenomBalances.at(denom) - nUnconfirmed;
+        
+        nSumPerCoin = nCoins * nConfirmed;
+        nMintedTotals += nSumPerCoin;
+        
         if (nUnconfirmed)
             strUnconfirmed = QString("(") + QString::number(nUnconfirmed) + QString(" unconfirmed) ");
         else
             strUnconfirmed = "";
 
-        strDenomStats = strUnconfirmed + QString::number(mapDenomBalances.at(denom)) + " x " +
+        strDenomStats = strUnconfirmed + QString::number(nConfirmed) + " x " +
                         QString::number(nCoins) + " = <b>" + 
                         QString::number(nSumPerCoin) + " zPIV </b>";
         
@@ -578,8 +586,8 @@ void PrivacyDialog::setBalance(const CAmount& balance,         const CAmount& un
                 break;
         }
     }
-    ui->labelzAvailableAmount->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV "));
-    ui->labelzAvailableAmount_2->setText(QString::number(zerocoinBalance/COIN) + QString(" zPIV "));
+    ui->labelzAvailableAmount->setText(QString::number(nMintedTotals) + QString(" zPIV "));
+    ui->labelzAvailableAmount_2->setText(QString::number(nMintedTotals) + QString(" zPIV "));
     ui->labelzPIVAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance, false, BitcoinUnits::separatorAlways));
 }
 
@@ -588,7 +596,7 @@ void PrivacyDialog::updateDisplayUnit()
     if (walletModel && walletModel->getOptionsModel()) {
         nDisplayUnit = walletModel->getOptionsModel()->getDisplayUnit();
         if (currentBalance != -1)
-            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance, currentZerocoinBalance, 
+            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance, currentZerocoinBalance, currentUnconfirmedZerocoinBalance,
                        currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
     }
 }

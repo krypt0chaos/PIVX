@@ -277,6 +277,7 @@ public:
         strObfuscationPoolDummyAddress = "y57cqfGRkekRyDRNeJiLtYVEbvhXrNbmox";
         nStopDualSporkKeys = 1491004800; // April 1 2017 00:00:00 GMT
         nStartMasternodePayments = 1420837558; //Fri, 09 Jan 2015 21:05:58 GMT
+        nMintRequiredConfirmations = 3;
         nBudget_Fee_Confirmations = 3; // Number of confirmations for the finalization fee. We have to make this very short 
                                        // here because we only have a 8 block finalization window on testnet
     }

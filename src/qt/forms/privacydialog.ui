@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>991</width>
-    <height>552</height>
+    <height>568</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -52,7 +52,7 @@
           </font>
          </property>
          <property name="toolTip">
-          <string>PIV which were anonymized via Zerocin Protocol</string>
+          <string>PIV which were anonymized via Zerocoin Protocol</string>
          </property>
          <property name="autoFillBackground">
           <bool>true</bool>
@@ -887,7 +887,7 @@
                   <string>Information about the available Zerocoin funds.</string>
                  </property>
                  <property name="text">
-                  <string>Zerocoin Stats:</string>
+                  <string>Zerocoin Stats (confirmed zPIV only):</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
