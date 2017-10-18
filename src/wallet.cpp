@@ -29,6 +29,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
+#include <boost/filesystem/operations.hpp>
 
 using namespace std;
 
@@ -1253,7 +1254,7 @@ CAmount CWallet::GetBalance() const
     return nTotal;
 }
 
-CAmount CWallet::GetZerocoinBalance() const
+CAmount CWallet::GetZerocoinBalance(bool fMatureOnly) const
 {
     CAmount nTotal = 0;
     //! zerocoin specific fields
@@ -1265,7 +1266,7 @@ CAmount CWallet::GetZerocoinBalance() const
     {
         LOCK2(cs_main, cs_wallet);
         // Get Unused coins
-        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true, true, true);
+        list<CZerocoinMint> listPubCoin = CWalletDB(strWalletFile).ListMintedCoins(true, fMatureOnly, true);
         for (auto& mint : listPubCoin) {
             libzerocoin::CoinDenomination denom = mint.GetDenomination();
             nTotal += libzerocoin::ZerocoinDenominationToAmount(denom);
@@ -1280,6 +1281,11 @@ CAmount CWallet::GetZerocoinBalance() const
     if (nTotal < 0 ) nTotal = 0; // Sanity never hurts
 
     return nTotal;
+}
+
+CAmount CWallet::GetPendingZerocoinBalance() const
+{
+    return GetZerocoinBalance(false) - GetZerocoinBalance(true);
 }
 
 CAmount CWallet::GetUnconfirmedZerocoinBalance() const
@@ -3475,7 +3481,7 @@ void CWallet::AutoZeromint()
         return;
     }
 
-    CAmount nZerocoinBalance = GetZerocoinBalance();
+    CAmount nZerocoinBalance = GetPendingZerocoinBalance();
     CAmount nBalance = GetUnlockedCoins(); // We only consider unlocked coins, this also excludes masternode-vins
                                            // from being accidentally minted
     CAmount nMintAmount = 0;
@@ -3547,7 +3553,7 @@ void CWallet::AutoZeromint()
             LogPrintf("CWallet::AutoZeromint(): auto minting failed with error: %s\n", strError);
             return;
         }
-        nZerocoinBalance = GetZerocoinBalance();
+        nZerocoinBalance = GetPendingZerocoinBalance();
         nBalance = GetUnlockedCoins();
         dPercentage = 100 * (double)nZerocoinBalance / (double)(nZerocoinBalance + nBalance);
         LogPrintf("CWallet::AutoZeromint() @ block %ld: successfully minted %ld zPIV. Current percentage of zPIV: %lf%%\n",
@@ -4093,7 +4099,7 @@ bool CWallet::CreateZerocoinSpendTransaction(CAmount nValue, int nSecurityLevel,
 {
     // Check available funds
     int nStatus = ZPIV_TRX_FUNDS_PROBLEMS;
-    if (nValue > GetZerocoinBalance()) {
+    if (nValue > GetZerocoinBalance(true)) {
         receipt.SetStatus("You don't have enough Zerocoins in your wallet", nStatus);
         return false;
     }
@@ -4304,7 +4310,7 @@ string CWallet::ResetSpentZerocoin()
     long removed = 0;
     CWalletDB walletdb(pwalletMain->strWalletFile);
 
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, true);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(false, false, false);
     list<CZerocoinSpend> listSpends = walletdb.ListSpentCoins();
     list<CZerocoinSpend> listUnconfirmedSpends;
 
@@ -4326,9 +4332,7 @@ string CWallet::ResetSpentZerocoin()
             if (mint.GetSerialNumber() == spend.GetSerial()) {
                 removed++;
                 mint.SetUsed(false);
-                mint.SetTxHash(0);
-                mint.SetHeight(0);
-
+                RemoveSerialFromDB(spend.GetSerial());
                 walletdb.WriteZerocoinMint(mint);
                 walletdb.EraseZerocoinSpendSerialEntry(spend.GetSerial());
                 continue;
@@ -4368,6 +4372,47 @@ void CWallet::ReconsiderZerocoins(std::list<CZerocoinMint>& listMintsRestored)
         }
         listMintsRestored.emplace_back(mint);
     }
+}
+
+
+void CWallet::ZPivBackupWallet()
+{
+    filesystem::path backupDir = GetDataDir() / "backups";
+    filesystem::path backupPath;
+    string strNewBackupName;
+
+    for (int i = 0; i < 10; i++) {
+        strNewBackupName = strprintf("wallet-autozpivbackup-%d.dat", i);
+        backupPath = backupDir / strNewBackupName;
+
+        if (filesystem::exists(backupPath)) {
+            //Keep up to 10 backups
+            if (i <= 8) {
+                //If the next file backup exists and is newer, then iterate
+                filesystem::path nextBackupPath = backupDir / strprintf("wallet-autozpivbackup-%d.dat", i + 1);
+                if (filesystem::exists(nextBackupPath)) {
+                    time_t timeThis = filesystem::last_write_time(backupPath);
+                    time_t timeNext = filesystem::last_write_time(nextBackupPath);
+                    if (timeThis > timeNext) {
+                        //The next backup is created before this backup was
+                        //The next backup is the correct path to use
+                        backupPath = nextBackupPath;
+                        break;
+                    }
+                }
+                //Iterate to the next filename/number
+                continue;
+            }
+            //reset to 0 because name with 9 already used
+            strNewBackupName = strprintf("wallet-autozpivbackup-%d.dat", 0);
+            backupPath = backupDir / strNewBackupName;
+            break;
+        }
+        //This filename is fresh, break here and backup
+        break;
+    }
+
+    BackupWallet(*this, backupPath.string());
 }
 
 string CWallet::MintZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoinMint>& vMints, const CCoinControl* coinControl)
@@ -4413,6 +4458,10 @@ string CWallet::MintZerocoin(CAmount nValue, CWalletTx& wtxNew, vector<CZerocoin
         }
     }
 
+    //Create a backup of the wallet
+    if (fBackupMints)
+        ZPivBackupWallet();
+
     return "";
 }
 
@@ -4432,6 +4481,9 @@ bool CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wtxN
         return false;
     }
 
+    if (fMintChange && fBackupMints)
+        ZPivBackupWallet();
+
     CWalletDB walletdb(pwalletMain->strWalletFile);
     if (!CommitTransaction(wtxNew, reserveKey)) {
         LogPrintf("%s: failed to commit\n", __func__);
@@ -4448,15 +4500,16 @@ bool CWallet::SpendZerocoin(CAmount nAmount, int nSecurityLevel, CWalletTx& wtxN
         for (CZerocoinSpend spend : receipt.GetSpends()) {
             if (!walletdb.EraseZerocoinSpendSerialEntry(spend.GetSerial())) {
                 receipt.SetStatus("Error: It cannot delete coin serial number in wallet", ZPIV_ERASE_SPENDS_FAILED);
-                return false;
             }
+
+            //Remove from public zerocoinDB
+            RemoveSerialFromDB(spend.GetSerial());
         }
 
         // erase new mints
         for (auto& mint : vNewMints) {
             if (!walletdb.EraseZerocoinMint(mint)) {
                 receipt.SetStatus("Error: Unable to cannot delete zerocoin mint in wallet", ZPIV_ERASE_NEW_MINTS_FAILED);
-                return false;
             }
         }
 
