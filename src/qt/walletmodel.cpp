@@ -19,7 +19,8 @@
 #include "sync.h"
 #include "ui_interface.h"
 #include "wallet.h"
-#include "walletdb.h" // for BackupWallet
+#include "walletdb.h"
+#include "walletbalance.h" // for BackupWallet
 #include <stdint.h>
 
 #include <QDebug>
@@ -77,9 +78,19 @@ CAmount WalletModel::getZerocoinBalance() const
     return wallet->GetZerocoinBalance(true);
 }
 
+CAmount WalletModel::getMatureZerocoinBalance() const
+{
+    return wallet->GetZerocoinBalance(true);
+}
+
 CAmount WalletModel::getUnconfirmedZerocoinBalance() const
 {
     return wallet->GetUnconfirmedZerocoinBalance();
+}
+
+CAmount WalletModel::getImmatureZerocoinBalance() const
+{
+    return wallet->GetPendingZerocoinBalance();
 }
 
 CAmount WalletModel::getUnconfirmedBalance() const
@@ -155,7 +166,7 @@ void WalletModel::checkBalanceChanged()
     CAmount newUnconfirmedBalance = getUnconfirmedBalance();
     CAmount newImmatureBalance = getImmatureBalance();
     CAmount newZerocoinBalance = getZerocoinBalance();
-    CAmount newUnconfirmedZerocoinBalance = getUnconfirmedZerocoinBalance();
+    CAmount newMatureZerocoinBalance = getMatureZerocoinBalance();
     CAmount newWatchOnlyBalance = 0;
     CAmount newWatchUnconfBalance = 0;
     CAmount newWatchImmatureBalance = 0;
@@ -166,20 +177,29 @@ void WalletModel::checkBalanceChanged()
     }
 
     if (cachedBalance != newBalance || cachedUnconfirmedBalance != newUnconfirmedBalance || cachedImmatureBalance != newImmatureBalance || 
-        cachedZerocoinBalance != newZerocoinBalance || cachedUnconfirmedZerocoinBalance != newUnconfirmedZerocoinBalance || cachedTxLocks != nCompleteTXLocks || 
+        cachedZerocoinBalance != newZerocoinBalance || cachedMatureZerocoinBalance != newMatureZerocoinBalance || cachedTxLocks != nCompleteTXLocks || 
         cachedWatchOnlyBalance != newWatchOnlyBalance || cachedWatchUnconfBalance != newWatchUnconfBalance || cachedWatchImmatureBalance != newWatchImmatureBalance) {
         cachedBalance = newBalance;
         cachedUnconfirmedBalance = newUnconfirmedBalance;
         cachedImmatureBalance = newImmatureBalance;
         cachedZerocoinBalance = newZerocoinBalance;
-        cachedUnconfirmedZerocoinBalance = newUnconfirmedZerocoinBalance;
+        cachedMatureZerocoinBalance = newMatureZerocoinBalance;
         cachedTxLocks = nCompleteTXLocks;
         cachedWatchOnlyBalance = newWatchOnlyBalance;
         cachedWatchUnconfBalance = newWatchUnconfBalance;
         cachedWatchImmatureBalance = newWatchImmatureBalance;
-       
-        emit balanceChanged(newBalance, newUnconfirmedBalance, newImmatureBalance, newZerocoinBalance,
-            newUnconfirmedZerocoinBalance, newWatchOnlyBalance, newWatchUnconfBalance, newWatchImmatureBalance);
+        
+        WalletBalance* wb = new WalletBalance(this, NULL);
+        wb->setBalance(newBalance);
+        wb->setUnconfirmedBalance(newUnconfirmedBalance);
+        wb->setImmatureBalance(newImmatureBalance);
+        wb->setZerocoinBalance(newZerocoinBalance);
+        wb->setMatureZerocoinBalance(newMatureZerocoinBalance);
+        wb->setWatchOnlyBalance(newWatchOnlyBalance);
+        wb->setWatchUnconfirmedBalance(newWatchUnconfBalance);
+        wb->setWatchImmatureBalance(newWatchImmatureBalance);
+        
+        emit balanceChanged(*wb);
     }
 }
 

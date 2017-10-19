@@ -887,7 +887,7 @@
                   <string>Information about the available Zerocoin funds.</string>
                  </property>
                  <property name="text">
-                  <string>Zerocoin Stats (confirmed zPIV only):</string>
+                  <string>Zerocoin Stats (mature zPIV only):</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

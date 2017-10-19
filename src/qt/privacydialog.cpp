@@ -12,6 +12,7 @@
 #include "libzerocoin/Denominations.h"
 #include "optionsmodel.h"
 #include "sendcoinsentry.h"
+#include "walletbalance.h"
 #include "walletmodel.h"
 #include "coincontrol.h"
 #include "zpivcontroldialog.h"
@@ -101,13 +102,11 @@ void PrivacyDialog::setModel(WalletModel* walletModel)
     this->walletModel = walletModel;
 
     if (walletModel && walletModel->getOptionsModel()) {
+        WalletBalance* wb = new WalletBalance(this, walletModel);
         // Keep up to date with wallet
-        setBalance(walletModel->getBalance(),         walletModel->getUnconfirmedBalance(), walletModel->getImmatureBalance(), 
-                   walletModel->getZerocoinBalance(), walletModel->getUnconfirmedZerocoinBalance(),  walletModel->getWatchBalance(),
-                   walletModel->getWatchUnconfirmedBalance(), walletModel->getWatchImmatureBalance());
-        
-        connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, 
-                               SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
+        setBalance(*wb);
+        connect(walletModel, SIGNAL(balanceChanged(WalletBalance)), this, 
+                               SLOT(setBalance(WalletBalance)));
         ui->securityLevel->setValue(nSecurityLevel);
     }
 }
@@ -198,10 +197,9 @@ void PrivacyDialog::on_pushButtonMintzPIV_clicked()
         
     }
 
+    WalletBalance* wb = new WalletBalance(this, walletModel);
     // Available balance isn't always updated, so force it.
-    setBalance(walletModel->getBalance(),                 walletModel->getUnconfirmedBalance(),         walletModel->getImmatureBalance(), 
-               walletModel->getZerocoinBalance(),         walletModel->getUnconfirmedZerocoinBalance(), walletModel->getWatchBalance(),
-               walletModel->getWatchUnconfirmedBalance(), walletModel->getWatchImmatureBalance());
+    setBalance(*wb);
     coinControlUpdateLabels();
 
     return;
@@ -501,24 +499,19 @@ bool PrivacyDialog::updateLabel(const QString& address)
     return false;
 }
 
-void PrivacyDialog::setBalance(const CAmount& balance,            const CAmount& unconfirmedBalance,         const CAmount& immatureBalance, 
-                               const CAmount& zerocoinBalance,    const CAmount& unconfirmedZerocoinBalance, const CAmount& watchOnlyBalance,
-                               const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance)
+void PrivacyDialog::setBalance(WalletBalance& walletBalance)
 {
     CAmount nMintedTotals = 0;
 
-    currentBalance = balance;
-    currentUnconfirmedBalance = unconfirmedBalance;
-    currentImmatureBalance = immatureBalance;
-    currentZerocoinBalance = zerocoinBalance;
-    currentUnconfirmedZerocoinBalance = unconfirmedZerocoinBalance;
-    currentWatchOnlyBalance = watchOnlyBalance;
-    currentWatchUnconfBalance = watchUnconfBalance;
-    currentWatchImmatureBalance = watchImmatureBalance;
+    currentBalance = walletBalance.getBalance();
+    currentUnconfirmedBalance = walletBalance.getUnconfirmedBalance();
+    currentImmatureBalance = walletBalance.getImmatureBalance();
+    currentZerocoinBalance = walletBalance.getZerocoinBalance();
+    currentMatureZerocoinBalance = walletBalance.getMatureZerocoinBalance();
+    currentWatchOnlyBalance = walletBalance.getWatchOnlyBalance();
+    currentWatchUnconfBalance = walletBalance.getWatchUnconfirmedBalance();
+    currentWatchImmatureBalance = walletBalance.getWatchImmatureBalance();
 
-    CWalletDB walletdb(pwalletMain->strWalletFile);
-    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, false, true);
- 
     std::map<libzerocoin::CoinDenomination, CAmount> mapDenomBalances;
     std::map<libzerocoin::CoinDenomination, int> mapUnconfirmed;
     for (const auto& denom : libzerocoin::zerocoinDenomList){
@@ -526,13 +519,15 @@ void PrivacyDialog::setBalance(const CAmount& balance,            const CAmount&
         mapUnconfirmed.insert(make_pair(denom, 0));
     }
 
+    CWalletDB walletdb(pwalletMain->strWalletFile);
+    list<CZerocoinMint> listMints = walletdb.ListMintedCoins(true, true, true);
     for (auto& mint : listMints){
         mapDenomBalances.at(mint.GetDenomination())++;
 
         if (!mint.GetHeight() || mint.GetHeight() > chainActive.Height() - Params().Zerocoin_MintRequiredConfirmations())
             mapUnconfirmed.at(mint.GetDenomination())++;
     }
-    
+
     int64_t nCoins = 0;
     int64_t nSumPerCoin = 0;
     int64_t nUnconfirmed = 0;
@@ -548,7 +543,7 @@ void PrivacyDialog::setBalance(const CAmount& balance,            const CAmount&
         nMintedTotals += nSumPerCoin;
         
         if (nUnconfirmed)
-            strUnconfirmed = QString("(") + QString::number(nUnconfirmed) + QString(" unconfirmed) ");
+            strUnconfirmed = QString("(") + QString::number(nUnconfirmed) + QString(" immature) ");
         else
             strUnconfirmed = "";
 
@@ -588,16 +583,17 @@ void PrivacyDialog::setBalance(const CAmount& balance,            const CAmount&
     }
     ui->labelzAvailableAmount->setText(QString::number(nMintedTotals) + QString(" zPIV "));
     ui->labelzAvailableAmount_2->setText(QString::number(nMintedTotals) + QString(" zPIV "));
-    ui->labelzPIVAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, balance - immatureBalance, false, BitcoinUnits::separatorAlways));
+    ui->labelzPIVAmountValue->setText(BitcoinUnits::floorHtmlWithUnit(nDisplayUnit, walletBalance.getBalance() - walletBalance.getImmatureBalance(), false, BitcoinUnits::separatorAlways));
 }
 
 void PrivacyDialog::updateDisplayUnit()
 {
     if (walletModel && walletModel->getOptionsModel()) {
         nDisplayUnit = walletModel->getOptionsModel()->getDisplayUnit();
-        if (currentBalance != -1)
-            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance, currentZerocoinBalance, currentUnconfirmedZerocoinBalance,
-                       currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
+        if (currentBalance != -1) {
+            WalletBalance* wb = new WalletBalance(this, walletModel);
+            setBalance(*wb);
+        }
     }
 }
 

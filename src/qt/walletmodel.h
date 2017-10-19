@@ -22,6 +22,7 @@ class OptionsModel;
 class RecentRequestsTableModel;
 class TransactionTableModel;
 class WalletModelTransaction;
+class WalletBalance;
 
 class CCoinControl;
 class CKeyID;
@@ -135,6 +136,8 @@ public:
     CAmount getImmatureBalance() const;
     CAmount getZerocoinBalance() const;
     CAmount getUnconfirmedZerocoinBalance() const;
+    CAmount getMatureZerocoinBalance() const;
+    CAmount getImmatureZerocoinBalance() const;
     bool haveWatchOnly() const;
     CAmount getWatchBalance() const;
     CAmount getWatchUnconfirmedBalance() const;
@@ -230,7 +233,7 @@ private:
     CAmount cachedUnconfirmedBalance;
     CAmount cachedImmatureBalance;
     CAmount cachedZerocoinBalance;
-    CAmount cachedUnconfirmedZerocoinBalance;
+    CAmount cachedMatureZerocoinBalance;
     CAmount cachedWatchOnlyBalance;
     CAmount cachedWatchUnconfBalance;
     CAmount cachedWatchImmatureBalance;
@@ -247,7 +250,7 @@ private:
 
 signals:
     // Signal that balance in wallet changed
-    void balanceChanged(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& zerocoinBalance, const CAmount& unconfirmedZerocoinBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
+    void balanceChanged(WalletBalance& walletBalance);
 
     // Encryption status of wallet changed
     void encryptionStatusChanged(int status);

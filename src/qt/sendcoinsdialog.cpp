@@ -22,6 +22,7 @@
 #include "ui_interface.h"
 #include "utilmoneystr.h"
 #include "wallet.h"
+#include "walletbalance.h"
 
 #include <QMessageBox>
 #include <QScrollBar>
@@ -159,10 +160,10 @@ void SendCoinsDialog::setModel(WalletModel* model)
             }
         }
 
-        setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getZerocoinBalance (),
-                   model->getUnconfirmedZerocoinBalance(), model->getWatchBalance(), model->getWatchUnconfirmedBalance(), 
-                   model->getWatchImmatureBalance());
-        connect(model, SIGNAL(balanceChanged(CAmount, CAmount,  CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
+        WalletBalance* wb = new WalletBalance(this, model);
+        setBalance(*wb);
+
+        connect(model, SIGNAL(balanceChanged(WalletBalance)), this, SLOT(setBalance(WalletBalance)));
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
         updateDisplayUnit();
 
@@ -543,34 +544,28 @@ bool SendCoinsDialog::handlePaymentRequest(const SendCoinsRecipient& rv)
     return true;
 }
 
-void SendCoinsDialog::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& zerocoinBalance, const CAmount& unconfirmedZerocoinBalance, const CAmount& watchBalance, const CAmount& watchUnconfirmedBalance, const CAmount& watchImmatureBalance)
+void SendCoinsDialog::setBalance(WalletBalance& walletBalance)
 {
-    Q_UNUSED(unconfirmedBalance);
-    Q_UNUSED(immatureBalance);
-    Q_UNUSED(zerocoinBalance);
-    Q_UNUSED(unconfirmedZerocoinBalance);
-    Q_UNUSED(watchBalance);
-    Q_UNUSED(watchUnconfirmedBalance);
-    Q_UNUSED(watchImmatureBalance);
-
     if (model && model->getOptionsModel()) {
         uint64_t bal = 0;
-        bal = balance;
+        bal = walletBalance.getBalance();
         ui->labelBalance->setText(BitcoinUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), bal));
     }
 }
 
 void SendCoinsDialog::updateDisplayUnit()
 {
-    TRY_LOCK(cs_main, lockMain);
-    if (!lockMain) return;
+    if (model && model->getOptionsModel()) {
+        TRY_LOCK(cs_main, lockMain);
+        if (!lockMain) return;
 
-    setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getZerocoinBalance (), 
-               model->getUnconfirmedZerocoinBalance(), model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
-    coinControlUpdateLabels();
-    ui->customFee->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
-    updateMinFeeLabel();
-    updateSmartFeeLabel();
+        WalletBalance* wb = new WalletBalance(this, model);
+        setBalance(*wb);
+        coinControlUpdateLabels();
+        ui->customFee->setDisplayUnit(model->getOptionsModel()->getDisplayUnit());
+        updateMinFeeLabel();
+        updateSmartFeeLabel();
+    }
 }
 
 void SendCoinsDialog::updateSwiftTX()

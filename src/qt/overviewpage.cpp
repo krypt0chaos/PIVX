@@ -170,14 +170,22 @@ void OverviewPage::getPercentage(CAmount nTotalBalance, CAmount nZerocoinBalance
     
 }
 
-void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& zerocoinBalance, const CAmount& unconfirmedZerocoinBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance)
+void OverviewPage::setBalance(WalletBalance& walletBalance)
 {
+    CAmount balance = walletBalance.getBalance();
+    CAmount unconfirmedBalance = walletBalance.getUnconfirmedBalance();
+    CAmount immatureBalance = walletBalance.getImmatureBalance();
+    CAmount zerocoinBalance = walletBalance.getZerocoinBalance();
+    CAmount matureZerocoinBalance = walletBalance.getMatureZerocoinBalance();
+    CAmount watchOnlyBalance = walletBalance.getWatchOnlyBalance();
+    CAmount watchUnconfBalance = walletBalance.getWatchUnconfirmedBalance();
+    CAmount watchImmatureBalance = walletBalance.getWatchImmatureBalance();
 
     currentBalance = balance;
     currentUnconfirmedBalance = unconfirmedBalance;
     currentImmatureBalance = immatureBalance;
     currentZerocoinBalance = zerocoinBalance;
-    currentUnconfirmedZerocoinBalance = unconfirmedZerocoinBalance;
+    currentMatureZerocoinBalance = matureZerocoinBalance;
     currentWatchOnlyBalance = watchOnlyBalance;
     currentWatchUnconfBalance = watchUnconfBalance;
     currentWatchImmatureBalance = watchImmatureBalance;
@@ -271,10 +279,11 @@ void OverviewPage::setWalletModel(WalletModel* model)
         ui->listTransactions->setModel(filter);
         ui->listTransactions->setModelColumn(TransactionTableModel::ToAddress);
 
+        WalletBalance* wb = new WalletBalance(this, model);
+        
         // Keep up to date with wallet
-        setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(), model->getZerocoinBalance(),
-                   model->getUnconfirmedZerocoinBalance(), model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
-        connect(model, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)), this, SLOT(setBalance(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
+        setBalance(*wb);
+        connect(model, SIGNAL(balanceChanged(WalletBalance)), this, SLOT(setBalance(setBalance(WalletBalance))));
 
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
 
@@ -290,9 +299,10 @@ void OverviewPage::updateDisplayUnit()
 {
     if (walletModel && walletModel->getOptionsModel()) {
         nDisplayUnit = walletModel->getOptionsModel()->getDisplayUnit();
-        if (currentBalance != -1)
-            setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance, currentZerocoinBalance, currentUnconfirmedZerocoinBalance,
-                currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
+        if (currentBalance != -1) {
+            WalletBalance* wb = new WalletBalance(this, walletModel);
+            setBalance(*wb);
+        }
 
         // Update txdelegate->unit with the current unit
         txdelegate->unit = nDisplayUnit;

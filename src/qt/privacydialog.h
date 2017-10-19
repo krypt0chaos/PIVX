@@ -6,6 +6,7 @@
 #define BITCOIN_QT_PRIVACYDIALOG_H
 
 #include "guiutil.h"
+#include "walletbalance.h"
 
 #include <QDialog>
 #include <QHeaderView>
@@ -49,8 +50,7 @@ public:
     void setZPivControlLabels(int64_t nAmount, int nQuantity);
 
 public slots:
-//    void setBalance(const CAmount& balance, const CAmount& anonymizedBalance);
-    void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& zerocoinBalance, const CAmount& unconfirmedZerocoinBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
+    void setBalance(WalletBalance& walletBalance);
 
 protected:
     virtual void keyPressEvent(QKeyEvent* event);
@@ -65,7 +65,7 @@ private:
     CAmount currentUnconfirmedBalance;
     CAmount currentImmatureBalance;
     CAmount currentZerocoinBalance;
-    CAmount currentUnconfirmedZerocoinBalance;
+    CAmount currentMatureZerocoinBalance;
     CAmount currentWatchOnlyBalance;
     CAmount currentWatchUnconfBalance;
     CAmount currentWatchImmatureBalance;

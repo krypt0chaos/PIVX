@@ -210,6 +210,7 @@ HEADERS += src/activemasternode.h \
            src/qt/transactiontablemodel.h \
            src/qt/transactionview.h \
            src/qt/utilitydialog.h \
+           src/qt/walletbalance.h \
            src/qt/walletframe.h \
            src/qt/walletmodel.h \
            src/qt/walletmodeltransaction.h \
@@ -503,6 +504,7 @@ SOURCES += src/activemasternode.cpp \
            src/qt/transactiontablemodel.cpp \
            src/qt/transactionview.cpp \
            src/qt/utilitydialog.cpp \
+           src/qt/walletbalance.cpp \
            src/qt/walletframe.cpp \
            src/qt/walletmodel.cpp \
            src/qt/walletmodeltransaction.cpp \
