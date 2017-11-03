@@ -884,8 +884,7 @@ font-weight:normal;
 padding-right:5px;
 }
 
-/**************************** OVERVIEW SCREEN *******************************************/
-
+/* Header design for ALL tabs/pages *****************************************************/
 /* Horizontal lines */
 QFrame[frameShape="4"] { /* QFrame::HLine == 0x0004 */
 border:1px solid #372f44;
@@ -895,12 +894,13 @@ border:1px solid #372f44;
 QLabel#labelOverviewHeaderLeft {
 font-weight:bold;
 font-size:20px;
+background-color:#ffffff;
 }
 
 QLabel#labelOverviewHeaderRight {
 qproperty-alignment: 'AlignVCenter | AlignRight';
 background-image: url(':/images/pivx_logo_horizontal');
-/* background-repeat: no-repeat; */
+background-repeat: no-repeat;
 }
 
 QWidget .QFrame#frame_Header { /* Header with Page-Title and PIVX-image */
@@ -912,6 +912,8 @@ QWidget .QFrame#frame_BG { /* Background */
 min-width:400px;
 background-color:#f8f6f6;
 }
+
+/**************************** OVERVIEW SCREEN *******************************************/
 
 QWidget .QFrame#frame_Space { /* Space between Header and Content */
 min-width:400px;
@@ -1260,7 +1262,6 @@ margin-left:0px;
 QWidget .QFrame#frame_RecentTransactions { /* Transactions Widget */
 min-width:410px;
 min-height:100px;
-margin-right:20px;
 margin-left:0;
 margin-top:0;
 }
@@ -1295,7 +1296,20 @@ QDialog#SendCoinsDialog {
 background-color:#fff;
 }
 
+QDialog#SendCoinsDialog .QFrame#frameCoinControl_BG { /* Coin Control Section */
+background-color:#ffffff;
+}
+
+QDialog#SendCoinsDialog .QFrame#frameFee { /* Coin Control Section */
+background-color:#ffffff;
+}
+
+QDialog#SendCoinsDialog .QFrame#frame_Send { /* Coin Control Section */
+background-color:#ffffff;
+}
+
 QDialog#SendCoinsDialog .QFrame#frameCoinControl { /* Coin Control Section */
+/* background-color:#ffff00; */
 }
 
 QDialog#SendCoinsDialog .QFrame#frameCoinControl > .QLabel { /* Default Font Color and  Size */
@@ -1309,9 +1323,17 @@ min-height:25px;
 }
 
 QDialog#SendCoinsDialog .QFrame#frameCoinControl .QLabel#labelCoinControlFeatures { /* Coin Control Header */
-color:#382f44;
+qproperty-alignment: 'AlignVCenter | AlignLeft';
+min-width:160px;
+background-color:transparent;
+color:#382F44;
 font-weight:bold;
 font-size:14px;
+margin-right:5px;
+padding-right:5px;
+/* color:#382f44; */
+/* font-weight:bold; */
+/* font-size:14px; */
 }
 
 QDialog#SendCoinsDialog .QFrame#frameCoinControl .QWidget#widgetCoinControl { /* Coin Control Inputs */
@@ -1334,7 +1356,7 @@ margin-right:112px;
 }
 
 QDialog#SendCoinsDialog .QScrollArea#scrollArea .QWidget#scrollAreaWidgetContents { /* Send To Widget */
-background:transparent;
+background-color:#ffffff;
 }
 
 QDialog#SendCoinsDialog .QPushButton#sendButton { /* Send Button */
