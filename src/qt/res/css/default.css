@@ -1,9 +1,16 @@
 /****************************************************************************************/
 /* Global color codes:                                                                  */
-/* dark-purple: #372f44                                                                 */ 
-/* light-purple: #5c4c7c                                                                */ 
-/* fuchsia: #df1cca                                                                     */
-/* background: #f8f6f6                                                                  */
+/* dark-purple:   #382f44                                                               */
+/* transparent-purple: #e9e7ef (for inactive backgrounds)                               */
+/*                                                                                      */
+/* light-purple1: #b396f6 (main purple for white backgrounds)                           */
+/* light-purple2: #9179c7 (sligtly darker for gradients)                                */
+/*                                                                                      */
+/* medium-purple1: #5c4c7c (main purple for dark backgrounds)                           */
+/* medium-purple2: #5b4c86 (sligtly darker for gradients)                               */
+/*                                                                                      */
+/* fuchsia:       #df1cca                                                               */
+/* background:    #f8f6f6                                                               */
 /****************************************************************************************/
 
 WalletFrame {
@@ -457,22 +464,46 @@ QScrollBar:right-arrow {
 background-image: url(':/images/rightArrow_small');
 }
 
-QSlider::handle:horizontal {
-background-color:#f2f2f2;
-border:1px solid #c2c2c2;
-border-radius:10px;
+QSlider::groove:horizontal {
+border: 1px solid #bbb;
+background: white;
+height: 6px;
+border-radius: 4px;
 }
 
 QSlider::sub-page:horizontal {
-background-color:#5c4c7c;
-border-color:#c2c2c2;
-border-radius:3px;
+/* background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #5B4C86, stop: 1 #7b67a9); */
+background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #9179c7, stop: 1 #b396f6);
+border: 1px solid #333;
+height: 10px;
+border-radius: 4px;
 }
 
 QSlider::add-page:horizontal {
-background-color:#dedede;
-border:1px solid #c2c2c2;
-border-radius:3px;
+background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #5c4c7c, stop: 1 #9179c7);
+border: 1px solid #333;
+height: 10px;
+border-radius: 4px;
+}
+
+QSlider::handle:horizontal {
+background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fff, stop:1 #f8f6f6);
+border: 1px solid #333;
+width: 18px;
+height: 18px;
+margin-top: -6px;
+margin-bottom: -6px;
+border-radius: 9px;
+}
+
+QSlider::handle:horizontal:hover {
+background-color: qradialgradient(cx: 0.5, cy: 0.5, fx: 0.5, fy: 0.5, radius: 0.7, stop: 0 #5c4c7c, stop: 0.7 #ffffff);
+border: 2px solid #333;
+width: 16px;
+height: 16px;
+margin-top: -6px;
+margin-bottom: -6px;
+border-radius: 8px;
 }
 
 /**************************** DIALOG BOXES **********************************************/
@@ -1306,6 +1337,7 @@ background-color:#ffffff;
 
 QDialog#SendCoinsDialog .QFrame#frame_Send { /* Coin Control Section */
 background-color:#ffffff;
+margin-bottom:6px;
 }
 
 QDialog#SendCoinsDialog .QFrame#frameCoinControl { /* Coin Control Section */
@@ -1347,6 +1379,19 @@ QDialog#SendCoinsDialog .QFrame#frameCoinControl .QCheckBox#checkBoxCoinControlC
 }
 
 QDialog#SendCoinsDialog .QFrame#frameCoinControl .QValidatedLineEdit#lineEditCoinControlChange { /* Custom Change Address */
+}
+
+QDialog#SendCoinsDialog .QFrame#frameCoinControl .QValidatedLineEdit#lineEditCoinControlChange:!focus { /* Custom Change Address */
+color: #5c4c7c;
+background-color: #e9e7ef;
+}
+
+QDialog#SendCoinsDialog .QFrame#frameCoinControl .QLineEdit#splitBlockLineEdit { /* TX Splitter */
+}
+
+QDialog#SendCoinsDialog .QFrame#frameCoinControl .QLineEdit#splitBlockLineEdit:!focus { /* TX Splitter */
+color: #5c4c7c;
+background-color: #e9e7ef;
 }
 
 QDialog#SendCoinsDialog .QFrame#frameCoinControl .QLabel#labelCoinControlChangeLabel { /* Custom Change Address Validation Label */
@@ -1450,21 +1495,19 @@ min-height:27px;
 /**************************** SEND COINS ENTRY ******************************************/
 
 QStackedWidget#SendCoinsEntry .QFrame#SendCoins > .QLabel { /* Send Coin Entry Labels */
-background-color:#5c4c7c;
-min-width:102px;
+/* background-color:#5c4c7c; */
+min-width:10px;
 font-weight:bold;
-font-size:11px;
-color:#ffffff;
 min-height:25px;
 margin-right:5px;
 padding-right:5px;
 }
 
-QStackedWidget#SendCoinsEntry .QFrame#SendCoins .QLabel#amountLabel {
-background-color:#6a6a6a;
+QStackedWidget#SendCoinsEntry .QValidatedLineEdit#payTo { /* Pay To Input Field */
 }
 
-QStackedWidget#SendCoinsEntry .QValidatedLineEdit#payTo { /* Pay To Input Field */
+QStackedWidget#SendCoinsEntry .QValidatedLineEdit#payTo:!focus { /* Pay To Input Field */
+color: #5c4c7c;
 }
 
 QStackedWidget#SendCoinsEntry .QToolButton { /* General Settings for Pay To Icons */
@@ -1489,6 +1532,10 @@ QStackedWidget#SendCoinsEntry .QToolButton#deleteButton {
 }
 
 QStackedWidget#SendCoinsEntry .QLineEdit#addAsLabel { /* Pay To Input Field */
+}
+
+QStackedWidget#SendCoinsEntry .QLineEdit#addAsLabel:!focus { /* Pay To Input Field */
+color: #5c4c7c;
 }
 
 /**************************** COIN CONTROL POPUP ****************************************/

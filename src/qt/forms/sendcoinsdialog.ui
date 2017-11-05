@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>978</width>
-    <height>651</height>
+    <height>661</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -1253,6 +1253,12 @@
                         </property>
                         <item>
                          <widget class="QSlider" name="sliderSmartFee">
+                          <property name="minimumSize">
+                           <size>
+                            <width>0</width>
+                            <height>24</height>
+                           </size>
+                          </property>
                           <property name="minimum">
                            <number>0</number>
                           </property>
@@ -1640,7 +1646,7 @@
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="groupFee"/>
   <buttongroup name="groupCustomFee"/>
+  <buttongroup name="groupFee"/>
  </buttongroups>
 </ui>
