@@ -513,10 +513,12 @@ void BitcoinMiner(CWallet* pwallet, bool fProofOfStake)
 {
     LogPrintf("PIVXMiner started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
+LogPrintf("XX42: BitcoinMiner 1\n");
     RenameThread("pivx-miner");
-
+LogPrintf("XX42: BitcoinMiner 2\n");
     // Each thread has its own key and counter
     CReserveKey reservekey(pwallet);
+LogPrintf("XX42: BitcoinMiner 3\n");
     unsigned int nExtraNonce = 0;
 
     //control the amount of times the client will check for mintable coins
@@ -528,7 +530,7 @@ void BitcoinMiner(CWallet* pwallet, bool fProofOfStake)
         nMintableLastCheck = GetTime();
         fMintableCoins = pwallet->MintableCoins();
     }
-
+LogPrintf("XX42: BitcoinMiner 4\n");
     while (fGenerateBitcoins || fProofOfStake) {
         if (fProofOfStake) {
             if (chainActive.Tip()->nHeight < Params().LAST_POW_BLOCK()) {

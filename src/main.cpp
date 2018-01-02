@@ -3710,6 +3710,7 @@ void static UpdateTip(CBlockIndex* pindexNew)
             fWarned = true;
         }
     }
+LogPrintf("XX42: UpdateTip 1\n");
 }
 
 /** Disconnect chainActive's tip. */
@@ -3745,12 +3746,17 @@ bool static DisconnectTip(CValidationState& state)
     mempool.removeCoinbaseSpends(pcoinsTip, pindexDelete->nHeight);
     mempool.check(pcoinsTip);
     // Update chainActive and related variables.
+LogPrintf("XX42: DisconnectTip 1a\n");
     UpdateTip(pindexDelete->pprev);
+LogPrintf("XX42: DisconnectTip 2a\n");
     // Let wallets know transactions went from 1-confirmed to
     // 0-confirmed or conflicted:
     BOOST_FOREACH (const CTransaction& tx, block.vtx) {
+LogPrintf("XX42: DisconnectTip 3a\n");
         SyncWithWallets(tx, NULL);
+LogPrintf("XX42: DisconnectTip 4a\n");
     }
+LogPrintf("XX42: DisconnectTip 5a\n");
     return true;
 }
 
@@ -3820,17 +3826,23 @@ bool static ConnectTip(CValidationState& state, CBlockIndex* pindexNew, CBlock* 
     mempool.removeForBlock(pblock->vtx, pindexNew->nHeight, txConflicted);
     mempool.check(pcoinsTip);
     // Update chainActive & related variables.
+LogPrintf("XX42: ConnectTip 1b\n");
     UpdateTip(pindexNew);
+LogPrintf("XX42: ConnectTip 2b\n");
     // Tell wallet about transactions that went from mempool
     // to conflicted:
     BOOST_FOREACH (const CTransaction& tx, txConflicted) {
+LogPrintf("XX42: ConnectTip 3b\n");
         SyncWithWallets(tx, NULL);
+LogPrintf("XX42: ConnectTip 4b\n");
     }
     // ... and about transactions that got confirmed:
     BOOST_FOREACH (const CTransaction& tx, pblock->vtx) {
+LogPrintf("XX42: ConnectTip 5b\n");
         SyncWithWallets(tx, pblock);
+LogPrintf("XX42: ConnectTip 6b\n");
     }
-
+LogPrintf("XX42: ConnectTip 7b\n");
     int64_t nTime6 = GetTimeMicros();
     nTimePostConnect += nTime6 - nTime5;
     nTimeTotal += nTime6 - nTime1;
@@ -4350,16 +4362,15 @@ bool FindBlockPos(CValidationState& state, CDiskBlockPos& pos, unsigned int nAdd
                 if (file) {
                     LogPrintf("Pre-allocating up to position 0x%x in blk%05u.dat\n", nNewChunks * BLOCKFILE_CHUNK_SIZE, pos.nFile);
                     AllocateFileRange(file, pos.nPos, nNewChunks * BLOCKFILE_CHUNK_SIZE - pos.nPos);
-LogPrintf("XX42: 7\n");
+
                     fclose(file);
                 }
             } else
                 return state.Error("out of disk space");
         }
     }
-LogPrintf("XX42: 8\n");
     setDirtyFileInfo.insert(nFile);
-LogPrintf("XX42: 9\n");
+LogPrintf("XX42: FindBlockPos okay\n");
     return true;
 }
 
