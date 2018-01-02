@@ -1600,7 +1600,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // ********************************************************* Step 10: setup ObfuScation
 
     uiInterface.InitMessage(_("Loading masternode cache..."));
-
+LogPrintf("XX42: 1\n");
     CMasternodeDB mndb;
     CMasternodeDB::ReadResult readResult = mndb.Read(mnodeman);
     if (readResult == CMasternodeDB::FileError)
@@ -1612,12 +1612,12 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         else
             LogPrintf("file format is unknown or invalid, please fix it manually\n");
     }
-
+LogPrintf("XX42: 2\n");
     uiInterface.InitMessage(_("Loading budget cache..."));
 
     CBudgetDB budgetdb;
     CBudgetDB::ReadResult readResult2 = budgetdb.Read(budget);
-
+LogPrintf("XX42: 3\n");
     if (readResult2 == CBudgetDB::FileError)
         LogPrintf("Missing budget cache - budget.dat, will try to recreate\n");
     else if (readResult2 != CBudgetDB::Ok) {

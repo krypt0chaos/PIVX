@@ -4350,14 +4350,16 @@ bool FindBlockPos(CValidationState& state, CDiskBlockPos& pos, unsigned int nAdd
                 if (file) {
                     LogPrintf("Pre-allocating up to position 0x%x in blk%05u.dat\n", nNewChunks * BLOCKFILE_CHUNK_SIZE, pos.nFile);
                     AllocateFileRange(file, pos.nPos, nNewChunks * BLOCKFILE_CHUNK_SIZE - pos.nPos);
+LogPrintf("XX42: 7\n");
                     fclose(file);
                 }
             } else
                 return state.Error("out of disk space");
         }
     }
-
+LogPrintf("XX42: 8\n");
     setDirtyFileInfo.insert(nFile);
+LogPrintf("XX42: 9\n");
     return true;
 }
 
@@ -4805,17 +4807,22 @@ bool AcceptBlock(CBlock& block, CValidationState& state, CBlockIndex** ppindex, 
         CDiskBlockPos blockPos;
         if (dbp != NULL)
             blockPos = *dbp;
+LogPrintf("XX42: 10\n");
         if (!FindBlockPos(state, blockPos, nBlockSize + 8, nHeight, block.GetBlockTime(), dbp != NULL))
             return error("AcceptBlock() : FindBlockPos failed");
+LogPrintf("XX42: 11\n");
         if (dbp == NULL)
             if (!WriteBlockToDisk(block, blockPos))
                 return state.Abort("Failed to write block");
+LogPrintf("XX42: 12\n");
         if (!ReceivedBlockTransactions(block, state, pindex, blockPos))
             return error("AcceptBlock() : ReceivedBlockTransactions failed");
+LogPrintf("XX42: 13\n");
     } catch (std::runtime_error& e) {
+LogPrintf("XX42: 14\n");
         return state.Abort(std::string("System error: ") + e.what());
     }
-
+LogPrintf("XX42: 15\n");
     return true;
 }
 
@@ -5365,9 +5372,10 @@ bool InitBlockIndex()
     fTxIndex = GetBoolArg("-txindex", true);
     pblocktree->WriteFlag("txindex", fTxIndex);
     LogPrintf("Initializing databases...\n");
-
+LogPrintf("XX42: 4\n");
     // Only add the genesis block if not reindexing (in which case we reuse the one already on disk)
     if (!fReindex) {
+LogPrintf("XX42: 5\n");
         try {
             CBlock& block = const_cast<CBlock&>(Params().GenesisBlock());
             // Start new block file
@@ -5389,7 +5397,7 @@ bool InitBlockIndex()
             return error("LoadBlockIndex() : failed to initialize block database: %s", e.what());
         }
     }
-
+LogPrintf("XX42: 6\n");
     return true;
 }
 
