@@ -4007,7 +4007,7 @@ void CWallet::AutoCombineDust()
         unsigned int txSizeEstimate = 90;
 
         //find masternode rewards that need to be combined
-        CCoinControl* coinControl = new CCoinControl();
+        CCoinControl coinControl;
         CAmount nTotalRewardsValue = 0;
         BOOST_FOREACH (const COutput& out, vCoins) {
             //no coins should get this far if they dont have proper maturity, this is double checking
@@ -4018,7 +4018,7 @@ void CWallet::AutoCombineDust()
                 continue;
 
             COutPoint outpt(out.tx->GetHash(), out.i);
-            coinControl->Select(outpt);
+            coinControl.Select(outpt);
             vRewardCoins.push_back(out);
             nTotalRewardsValue += out.Value();
             // Around 180 bytes per input. We use 190 to be certain
@@ -4028,7 +4028,7 @@ void CWallet::AutoCombineDust()
         }
 
         //if no inputs found then return
-        if (!coinControl->HasSelected())
+        if (!coinControl.HasSelected())
             continue;
 
         //we cannot combine one coin with itself
@@ -4047,10 +4047,10 @@ void CWallet::AutoCombineDust()
 
         //get the fee amount
         CWalletTx wtxdummy;
-        CreateTransaction(vecSend, wtxdummy, keyChange, nFeeRet, strErr, coinControl, ALL_COINS, false, CAmount(0));
+        CreateTransaction(vecSend, wtxdummy, keyChange, nFeeRet, strErr, &coinControl, ALL_COINS, false, CAmount(0));
         vecSend[0].second = nTotalRewardsValue - nFeeRet - 500;
 
-        if (!CreateTransaction(vecSend, wtx, keyChange, nFeeRet, strErr, coinControl, ALL_COINS, false, CAmount(0))) {
+        if (!CreateTransaction(vecSend, wtx, keyChange, nFeeRet, strErr, &coinControl, ALL_COINS, false, CAmount(0))) {
             LogPrintf("AutoCombineDust createtransaction failed, reason: %s\n", strErr);
             continue;
         }
@@ -4062,7 +4062,6 @@ void CWallet::AutoCombineDust()
 
         LogPrintf("AutoCombineDust sent transaction\n");
 
-        delete coinControl;
     }
 }
 
