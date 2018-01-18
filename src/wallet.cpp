@@ -2283,6 +2283,7 @@ bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     if (coinControl && coinControl->HasSelected()) {
         BOOST_FOREACH (const COutput& out, vCoins) {
+            printf("nValueRet: %ld >= nTargetValue: %ld\n", nValueRet, nTargetValue);
             if (!out.fSpendable)
                 continue;
 
@@ -2296,6 +2297,7 @@ bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*
             nValueRet += out.tx->vout[out.i].nValue;
             setCoinsRet.insert(make_pair(out.tx, out.i));
         }
+        printf("After loop: nValueRet: %ld >= nTargetValue: %ld\n", nValueRet, nTargetValue);
         return (nValueRet >= nTargetValue);
     }
 
@@ -4005,19 +4007,29 @@ void CWallet::AutoCombineDust()
         //find masternode rewards that need to be combined
         CCoinControl* coinControl = new CCoinControl();
         CAmount nTotalRewardsValue = 0;
+        long unsigned int nCoinsSize = vCoins.size();
+
         BOOST_FOREACH (const COutput& out, vCoins) {
+            nCoinsSize--;
+            printf("nCoinsSize: %ld\n", nCoinsSize);
             //no coins should get this far if they dont have proper maturity, this is double checking
             if (out.tx->IsCoinStake() && out.tx->GetDepthInMainChain() < COINBASE_MATURITY + 1)
                 continue;
 
-            if (out.Value() > nAutoCombineThreshold * COIN)
+            if (out.Value() > nAutoCombineThreshold * COIN) // Only collect outputs smaller than threshold
+                continue;
+
+            if (!out.fSpendable) // Exclude outputs we can't spend
                 continue;
 
             COutPoint outpt(out.tx->GetHash(), out.i);
             coinControl->Select(outpt);
             vRewardCoins.push_back(out);
+
             nTotalRewardsValue += out.Value();
         }
+
+        nTotalRewardsValue = nTotalRewardsValue - (nTotalRewardsValue / 10); // 10% safety margin
 
         //if no inputs found then return
         if (!coinControl->HasSelected())
