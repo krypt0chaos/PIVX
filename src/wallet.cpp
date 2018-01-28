@@ -4022,6 +4022,9 @@ void CWallet::AutoCombineDust()
                 break;
         }
 
+        // 10% safety margin to avoid "Insufficient funds" errors
+        nTotalRewardsValue = nTotalRewardsValue - (nTotalRewardsValue / 10);
+
         //if no inputs found then return
         if (!coinControl->HasSelected())
             continue;
